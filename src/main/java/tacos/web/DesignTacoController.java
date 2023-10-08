@@ -2,6 +2,7 @@ package tacos.web;
 
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.Errors;
@@ -9,6 +10,8 @@ import org.springframework.web.bind.annotation.*;
 import tacos.Ingredient;
 import tacos.Taco;
 import tacos.TacoOrder;
+import tacos.data.IngredientRepository;
+import tacos.data.TacoRepository;
 
 import java.util.Arrays;
 import java.util.List;
@@ -18,6 +21,15 @@ import java.util.List;
 @RequestMapping("/design")
 @SessionAttributes("tacoOrder")
 public class DesignTacoController {
+    private final IngredientRepository ingredientRepository;
+    private final TacoRepository tacoRepository;
+
+    @Autowired
+    public DesignTacoController(IngredientRepository ingredientRepository, TacoRepository tacoRepository) {
+        this.ingredientRepository = ingredientRepository;
+        this.tacoRepository = tacoRepository;
+    }
+
     @ModelAttribute
     public void addIngredientsToModel(Model model) {
         List<Ingredient> ingredients = Arrays.asList(
@@ -42,7 +54,7 @@ public class DesignTacoController {
 
     private Iterable<Ingredient> filterByType(List<Ingredient> ingredients, Ingredient.Type type) {
         return ingredients.stream()
-                .filter(i -> i.type().equals(type)).toList();
+                .filter(i -> i.getType().equals(type)).toList();
     }
 
     @ModelAttribute(name = "tacoOrder")
@@ -66,8 +78,9 @@ public class DesignTacoController {
             return "design";
         }
 
-        tacoOrder.addTaco(taco);
         log.info("Processing taco {}", taco);
+        Taco saved = tacoRepository.save(taco);
+        tacoOrder.addTaco(saved);
 
         return "redirect:/orders/current";
     }
